@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard รายงานประจำวันงานเทศกิจ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Kanit', sans-serif; background-color: #f0f9ff; }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-3px); box-shadow: 0 10px 20px -5px rgba(59, 130, 246, 0.15); border-color: #93c5fd; }
+        
+        /* Animation คนขาดส่ง */
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            70% { box-shadow: 0 0 0 4px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        .missing-alert { animation: pulse-red 2s infinite; }
+
+        /* Scrollbar */
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background-color: #94a3b8; }
+    </style>
+</head>
+<body>
+
+    <div class="bg-gradient-to-r from-blue-600 to-cyan-600 shadow-md sticky top-0 z-40 w-full text-white">
+        <div class="w-full px-6 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="bg-white p-1 rounded-full shadow-sm">
+                     <img src="https://img2.pic.in.th/pic/71f81565dc59a7f9545542493a5514ab.png" alt="Logo" class="h-10 w-auto">
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-wide">Dashboard รายงานประจำวันงานเทศกิจ</h1>
+                    <p class="text-[10px] text-blue-100 opacity-90">สำนักปลัดเทศบาล เทศบาลตำบลตันหยงมัส</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="text-right hidden sm:block">
+                    <div id="clockTime" class="text-xl font-bold leading-none">00:00</div>
+                    <div id="clockDate" class="text-[10px] text-blue-100 opacity-80">...</div>
+                </div>
+                <button onclick="window.location.reload()" class="bg-white/20 hover:bg-white/30 text-white p-2 rounded-full transition backdrop-blur-sm border border-white/30">
+                    ↻
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="w-full px-4 lg:px-8 py-8 space-y-8">
+
+        <div>
+            <div class="flex items-center gap-3 mb-6 bg-white p-3 rounded-lg shadow-sm border-l-4 border-blue-500">
+                <h2 class="text-xl font-bold text-slate-800">📅 สถานะประจำวัน (Today)</h2>
+                <div class="ml-auto flex gap-2 text-[10px] font-medium flex-wrap justify-end">
+                    <span class="flex items-center gap-1 bg-green-50 text-green-700 px-2 py-1 rounded-full border border-green-100"><span class="w-2 h-2 bg-green-500 rounded-full"></span> ส่งแล้ว</span>
+                    <span class="flex items-center gap-1 bg-red-50 text-red-700 px-2 py-1 rounded-full border border-red-100"><span class="w-2 h-2 bg-red-500 rounded-full"></span> ขาดส่ง (บันทึกแล้ว)</span>
+                    <span class="flex items-center gap-1 bg-white text-red-500 px-2 py-1 rounded-full border border-red-200 shadow-sm"><span class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span> ขาดส่ง (รอจัดการ)</span>
+                </div>
+            </div>
+
+            <div class="mb-8">
+                <h3 class="text-sm font-bold text-blue-800 mb-3 flex items-center gap-2 uppercase tracking-wider">
+                    <span class="bg-blue-100 text-blue-600 p-1 rounded">☀️</span> รอบเช้า (Morning)
+                </h3>
+                <div id="morningGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    <div class="col-span-full py-10 text-center text-slate-400 border-2 border-dashed border-blue-100 rounded-xl bg-white/50 text-sm">กำลังโหลดข้อมูล...</div>
+                </div>
+            </div>
+
+            <div class="mb-8">
+                <h3 class="text-sm font-bold text-blue-800 mb-3 flex items-center gap-2 uppercase tracking-wider">
+                    <span class="bg-blue-100 text-blue-600 p-1 rounded">🌤</span> รอบบ่าย (Afternoon)
+                </h3>
+                <div id="afternoonGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    <div class="col-span-full py-10 text-center text-slate-400 border-2 border-dashed border-blue-100 rounded-xl bg-white/50 text-sm">กำลังโหลดข้อมูล...</div>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-sm font-bold text-red-700 mb-3 flex items-center gap-2 uppercase tracking-wider">
+                    <span class="bg-red-100 text-red-600 p-1 rounded">📢</span> แจ้งปัญหา (Issues)
+                </h3>
+                <div id="complaintGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    <div class="col-span-full py-6 text-center text-slate-400 bg-white rounded-xl border border-slate-100 text-xs shadow-sm">วันนี้ยังไม่มีการแจ้งปัญหา</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-lg border border-blue-100 overflow-hidden">
+            <div class="p-4 bg-gradient-to-r from-blue-50 to-white border-b border-blue-100 flex flex-wrap items-center justify-between gap-4">
+                <h2 class="text-lg font-bold text-slate-700 flex items-center gap-2">
+                    <span class="text-blue-500">📋</span> ประวัติย้อนหลัง
+                </h2>
+                <div class="flex flex-wrap gap-2 items-center">
+                    <input type="month" id="monthFilter" onchange="applyFilter('month')" class="border border-blue-200 bg-white text-slate-600 rounded-lg px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-blue-400 transition">
+                    <input type="date" id="dateFilter" onchange="applyFilter('date')" class="border border-blue-200 bg-white text-slate-600 rounded-lg px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-blue-400 transition">
+                    <button onclick="resetFilter()" class="text-[10px] text-red-500 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition font-medium ml-2">ล้างค่า</button>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <div class="max-h-[600px] overflow-y-auto custom-scroll relative">
+                    <table class="w-full text-xs text-left text-slate-600">
+                        <thead class="text-[10px] text-blue-800 uppercase bg-blue-50/80 backdrop-blur sticky top-0 z-10 shadow-sm">
+                            <tr>
+                                <th class="px-5 py-3 font-bold min-w-[100px]">เวลาบันทึก</th>
+                                <th class="px-5 py-3 font-bold">รูปภาพ</th>
+                                <th class="px-5 py-3 font-bold min-w-[130px]">ชื่อพนักงาน</th>
+                                <th class="px-5 py-3 font-bold">ประเภท</th>
+                                <th class="px-5 py-3 font-bold min-w-[200px]">รายละเอียด</th>
+                                <th class="px-5 py-3 font-bold">พิกัด</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportTableBody" class="divide-y divide-blue-50">
+                            <tr><td colspan="6" class="text-center py-10 text-slate-400">กำลังโหลดข้อมูล...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="bg-blue-50/50 px-4 py-2 border-t border-blue-100 flex justify-between items-center">
+                <span class="text-[10px] text-blue-400">เลื่อนลงเพื่อดูข้อมูลเพิ่มเติม</span>
+                <span id="tableCount" class="text-[10px] font-bold text-blue-600"></span>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // ******************************************************
+        // ⚠️ ใส่ URL Web App ของคุณที่นี่
+        // ******************************************************
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzz8WfnnTgUKlv2I2c-cQ627aLzyrfNRcawmSrjNC97szsZzLuL-a0zb4W-Xx12mFBv/exec';
+        
+        let allReports = [];
+        let allEmployees = [];
+
+        window.onload = () => {
+            updateClock();
+            setInterval(updateClock, 1000);
+            initData();
+        };
+
+        function updateClock() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+            const dateStr = formatManualDate(now);
+            document.getElementById('clockTime').innerText = timeStr;
+            document.getElementById('clockDate').innerText = dateStr;
+        }
+
+        function initData() {
+            Promise.all([
+                fetch(SCRIPT_URL + '?op=getEmployees').then(r => r.json()),
+                fetch(SCRIPT_URL + '?op=getReports').then(r => r.json())
+            ]).then(([employees, reports]) => {
+                if(employees.status === 'error') throw new Error(employees.message);
+                if(reports.status === 'error') throw new Error(reports.message);
+                allEmployees = employees;
+                allReports = reports;
+                renderTrackingBoard();
+                renderTable(allReports);
+            }).catch(err => {
+                console.error(err);
+                Swal.fire('Error', 'โหลดข้อมูลไม่สำเร็จ', 'error');
+            });
+        }
+
+        function renderTrackingBoard() {
+            const morningGrid = document.getElementById('morningGrid');
+            const afternoonGrid = document.getElementById('afternoonGrid');
+            const complaintGrid = document.getElementById('complaintGrid');
+            
+            morningGrid.innerHTML = '';
+            afternoonGrid.innerHTML = '';
+            complaintGrid.innerHTML = '';
+
+            const now = new Date();
+            const currentHour = now.getHours();
+            const todayStr = getISODate(now);
+
+            const todayReports = allReports.filter(r => {
+                const d = parseThaiDate(r.timestamp);
+                return d && getISODate(d) === todayStr;
+            });
+
+            const submissionMap = {};
+            allEmployees.forEach(name => submissionMap[name] = new Set());
+            todayReports.forEach(r => {
+                if(submissionMap[r.name]) submissionMap[r.name].add(r.type);
+            });
+
+            let morningCardsData = [];
+            let afternoonCardsData = [];
+
+            allEmployees.forEach(name => {
+                const submittedTypes = submissionMap[name] || new Set();
+
+                // เช้า
+                if (submittedTypes.has('เช้า')) {
+                    const report = todayReports.find(r => r.name === name && r.type === 'เช้า');
+                    morningCardsData.push({ status: 1, name: name, data: report });
+                } else if (currentHour >= 12) {
+                    morningCardsData.push({ status: 2, name: name, data: null });
+                }
+
+                // บ่าย
+                if (submittedTypes.has('บ่าย')) {
+                    const report = todayReports.find(r => r.name === name && r.type === 'บ่าย');
+                    afternoonCardsData.push({ status: 1, name: name, data: report });
+                } else if (currentHour >= 16) {
+                    afternoonCardsData.push({ status: 2, name: name, data: null });
+                }
+            });
+
+            const sortFn = (a, b) => {
+                if (a.status !== b.status) return a.status - b.status; 
+                return a.name.localeCompare(b.name); 
+            };
+
+            morningCardsData.sort(sortFn);
+            afternoonCardsData.sort(sortFn);
+
+            morningCardsData.forEach(item => {
+                if(item.status === 1) morningGrid.appendChild(createReportCard(item.data));
+                else morningGrid.appendChild(createMissingCard(item.name, 'เช้า'));
+            });
+
+            afternoonCardsData.forEach(item => {
+                if(item.status === 1) afternoonGrid.appendChild(createReportCard(item.data));
+                else afternoonGrid.appendChild(createMissingCard(item.name, 'บ่าย'));
+            });
+
+            const complaints = todayReports.filter(r => r.type === 'เรื่องร้องเรียน');
+            if (complaints.length > 0) {
+                complaints.forEach(item => complaintGrid.appendChild(createReportCard(item)));
+            } else {
+                complaintGrid.innerHTML = `<div class="col-span-full py-6 text-center text-slate-400 bg-white rounded-xl border border-slate-100 text-xs shadow-sm">วันนี้ยังไม่มีการแจ้งปัญหา</div>`;
+            }
+
+            if (morningGrid.children.length === 0) morningGrid.innerHTML = `<div class="col-span-full py-6 text-center text-slate-400 bg-white rounded-xl text-xs border border-slate-100">ยังไม่มีข้อมูลรอบเช้า</div>`;
+            if (afternoonGrid.children.length === 0) afternoonGrid.innerHTML = `<div class="col-span-full py-6 text-center text-slate-400 bg-white rounded-xl text-xs border border-slate-100">ยังไม่มีข้อมูลรอบบ่าย</div>`;
+        }
+
+        // Card
+        function createReportCard(item) {
+            const imgUrl = fixDriveUrl(item.image);
+            let badgeClass = 'bg-green-50 text-green-700 border border-green-100';
+            let icon = '☀️';
+            let statusText = 'ส่งแล้ว';
+            let statusBadge = 'bg-green-500 text-white';
+            let isMissingRecord = item.detail === 'ขาดส่ง';
+
+            if (isMissingRecord) {
+                badgeClass = 'bg-red-50 text-red-600 border border-red-100';
+                statusText = 'ขาดส่ง';
+                statusBadge = 'bg-red-500 text-white';
+                icon = '❌';
+            }
+
+            if(item.type === 'บ่าย') { 
+                icon = '🌤'; 
+                if(!isMissingRecord) badgeClass = 'bg-orange-50 text-orange-700 border border-orange-100';
+            }
+            if(item.type === 'เรื่องร้องเรียน') { 
+                badgeClass = 'bg-red-50 text-red-700 border border-red-100'; icon = '📢'; statusText = 'แจ้งเหตุ'; statusBadge = 'bg-red-500 text-white animate-pulse';
+            }
+            
+            const div = document.createElement('div');
+            // ถ้าขาดส่ง ให้พื้นหลังแดงจางๆ
+            const bgClass = isMissingRecord ? 'bg-red-50/50' : 'bg-white';
+            
+            div.className = `${bgClass} rounded-lg shadow-sm border border-slate-200 overflow-hidden card-hover flex flex-col relative h-28`;
+            div.innerHTML = `
+                <div class="flex h-full">
+                    <div class="w-1/3 bg-slate-100 relative cursor-pointer group border-r border-slate-100" onclick="${isMissingRecord ? '' : `viewImage('${imgUrl}', '${item.name}')`}">
+                         ${imgUrl && !isMissingRecord ? `<img src="${imgUrl}" class="w-full h-full object-cover transition duration-500 group-hover:scale-110">` : 
+                           (isMissingRecord ? '<div class="flex items-center justify-center h-full text-2xl">🚫</div>' : '<div class="flex items-center justify-center h-full text-[10px] text-slate-400">No Img</div>')}
+                    </div>
+                    <div class="w-2/3 p-2.5 flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-[10px] text-slate-400 font-mono">${formatTime(item.timestamp)} น.</span>
+                                <span class="text-[9px] ${statusBadge} px-1.5 rounded-full shadow-sm">${statusText}</span>
+                            </div>
+                            <h3 class="font-bold text-slate-800 text-sm leading-tight truncate">${item.name}</h3>
+                            <div class="mt-1">
+                                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold ${badgeClass}">${icon} ${item.type}</span>
+                            </div>
+                        </div>
+                        ${item.detail && item.detail !== '-' ? `<div class="text-[10px] text-slate-500 bg-slate-50 p-1 rounded mt-0.5 truncate border border-slate-100">💬 ${item.detail}</div>` : ''}
+                    </div>
+                </div>
+            `;
+            return div;
+        }
+
+        // Missing Card (Alert)
+        function createMissingCard(name, type) {
+            const div = document.createElement('div');
+            div.className = 'bg-white rounded-lg shadow-sm border border-red-200 overflow-hidden flex flex-col relative h-28 missing-alert';
+            div.innerHTML = `
+                <div class="absolute top-0 right-0 p-1 opacity-10 text-red-600 text-4xl font-black">!</div>
+                <div class="flex h-full items-center p-3">
+                    <div class="w-10 h-10 rounded-full bg-red-50 text-red-500 flex items-center justify-center text-lg shrink-0 border border-red-100">
+                        ⏳
+                    </div>
+                    <div class="ml-3 z-10 w-full pr-1">
+                        <h3 class="font-bold text-slate-700 text-sm leading-tight truncate">${name}</h3>
+                        <p class="text-red-500 text-[10px] font-bold mt-0.5 mb-1.5">❌ ขาดส่ง (${type})</p>
+                        <button onclick="markAsMissing('${name}', '${type}')" class="text-[10px] bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded shadow-sm transition w-full">
+                            บันทึกขาดส่ง
+                        </button>
+                    </div>
+                </div>
+            `;
+            return div;
+        }
+
+        function markAsMissing(name, type) {
+            Swal.fire({
+                title: 'ยืนยันบันทึก?',
+                text: `บันทึกว่า "${name}" ขาดส่งรายงาน (${type})`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'ใช่, บันทึกเลย',
+                cancelButtonText: 'ยกเลิก'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                    const payload = { employee: name, type: type, details: 'ขาดส่ง', gps: '-', image: '' };
+                    fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) })
+                    .then(res => res.json())
+                    .then(data => {
+                        if(data.status === 'success'){
+                            Swal.fire({ icon: 'success', title: 'บันทึกเรียบร้อย', timer: 1500, showConfirmButton: false }).then(() => initData());
+                        } else throw new Error(data.message);
+                    })
+                    .catch(err => Swal.fire('Error', err.message, 'error'));
+                }
+            });
+        }
+
+        // --- Table Logic ---
+        function applyFilter(type) {
+            if(type === 'date') document.getElementById('monthFilter').value = '';
+            if(type === 'month') document.getElementById('dateFilter').value = '';
+            const dateVal = document.getElementById('dateFilter').value;   
+            const monthVal = document.getElementById('monthFilter').value; 
+            let filteredData = allReports.filter(item => {
+                const d = parseThaiDate(item.timestamp);
+                if (!d) return false; 
+                if (dateVal) return getISODate(d) === dateVal;
+                if (monthVal) {
+                    const itemMonth = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+                    return itemMonth === monthVal;
+                }
+                return true; 
+            });
+            renderTable(filteredData);
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('reportTableBody');
+            tbody.innerHTML = '';
+            document.getElementById('tableCount').innerText = `พบข้อมูล ${data.length} รายการ`;
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-400">ไม่พบข้อมูลตามเงื่อนไข</td></tr>`;
+                return;
+            }
+            data.forEach(item => {
+                const imgUrl = fixDriveUrl(item.image);
+                const row = document.createElement('tr');
+                
+                // Default style
+                row.className = 'bg-white border-b border-blue-50 hover:bg-blue-50/50 transition';
+                let typeColor = 'text-gray-600';
+                
+                if(item.type === 'เช้า') typeColor = 'text-green-600 font-medium';
+                if(item.type === 'บ่าย') typeColor = 'text-orange-600 font-medium';
+                if(item.type === 'เรื่องร้องเรียน') typeColor = 'text-red-600 font-bold';
+                
+                // *** เช็คขาดส่ง และเปลี่ยนสีพื้นหลังเป็นแดงอ่อน ***
+                if(item.detail === 'ขาดส่ง') {
+                    row.className = 'bg-red-50 border-b border-red-100 hover:bg-red-100 transition';
+                    typeColor = 'text-red-600 font-bold';
+                }
+
+                row.innerHTML = `
+                    <td class="px-5 py-3 whitespace-nowrap">
+                        <div class="text-xs font-medium text-slate-700">${formatManualDate(item.timestamp)}</div>
+                        <div class="text-[10px] text-blue-400">${formatTime(item.timestamp)} น.</div>
+                    </td>
+                    <td class="px-5 py-3">
+                        ${imgUrl && item.detail !== 'ขาดส่ง' ? `<div class="w-8 h-8 rounded bg-slate-100 overflow-hidden border border-slate-200 cursor-pointer hover:ring-2 hover:ring-blue-400 transition" onclick="viewImage('${imgUrl}','${item.name}')"><img src="${imgUrl}" class="w-full h-full object-cover"></div>` : '<span class="text-[10px] text-slate-300">-</span>'}
+                    </td>
+                    <td class="px-5 py-3 font-medium text-slate-800">${item.name}</td>
+                    <td class="px-5 py-3 text-[10px] ${typeColor}">${item.type}</td>
+                    <td class="px-5 py-3 text-[10px] text-slate-500 max-w-xs truncate" title="${item.detail}">${item.detail || '-'}</td>
+                    <td class="px-5 py-3 text-[10px]">
+                        ${item.gps && item.gps !== '-' ? `<a href="http://maps.google.com/?q=${item.gps}" target="_blank" class="text-blue-500 hover:underline flex items-center gap-1">📍 แผนที่</a>` : '-'}
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+        function resetFilter() {
+            document.getElementById('dateFilter').value = '';
+            document.getElementById('monthFilter').value = '';
+            renderTable(allReports);
+        }
+
+        // Helper
+        function formatManualDate(dateInput) {
+            let d;
+            if (dateInput instanceof Date) d = dateInput;
+            else d = parseThaiDate(dateInput);
+            if (!d) return "-";
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            let year = d.getFullYear();
+            if (year < 2400) year += 543;
+            return `${day}/${month}/${year}`;
+        }
+        function parseThaiDate(dateStr) {
+            try {
+                if (!dateStr) return null;
+                if (dateStr instanceof Date) return dateStr;
+                const parts = dateStr.split(/[\sT]+/);
+                const dateParts = parts[0].split(/[-/]/);
+                let day, month, year;
+                if (dateParts[0].length === 4) { year = parseInt(dateParts[0]); month = parseInt(dateParts[1]) - 1; day = parseInt(dateParts[2]); } 
+                else { day = parseInt(dateParts[0]); month = parseInt(dateParts[1]) - 1; year = parseInt(dateParts[2]); }
+                if (year > 2400) year -= 543;
+                let d = new Date(year, month, day);
+                if(parts[1]) {
+                    const timeParts = parts[1].split(':');
+                    d.setHours(parseInt(timeParts[0] || 0)); d.setMinutes(parseInt(timeParts[1] || 0)); d.setSeconds(parseInt(timeParts[2] || 0));
+                }
+                return d;
+            } catch (e) { return null; }
+        }
+        function fixDriveUrl(url) {
+            if (!url) return null;
+            let id = null;
+            if (url.match(/\/d\/(.+?)\//)) id = url.match(/\/d\/(.+?)\//)[1];
+            else if (url.match(/id=(.+?)(&|$)/)) id = url.match(/id=(.+?)(&|$)/)[1];
+            if (id) return `https://lh3.googleusercontent.com/d/${id}=s400`;
+            return url;
+        }
+        function getISODate(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+        function formatTime(dateStr) { const d = parseThaiDate(dateStr); return d ? d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) : "-"; }
+        function viewImage(url, title) {
+            if(!url) return;
+            const fullUrl = url.replace('=s400', '=s0'); 
+            Swal.fire({ imageUrl: fullUrl, imageAlt: title, title: title, showConfirmButton: false, showCloseButton: true, width: 'auto', backdrop: `rgba(0,0,0,0.8)` });
+        }
+    </script>
+</body>
+</html>
