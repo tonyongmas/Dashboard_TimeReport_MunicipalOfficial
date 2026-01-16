@@ -95,14 +95,55 @@
         </div>
 
         <div class="bg-white rounded-2xl shadow-lg border border-blue-100 overflow-hidden">
-            <div class="p-4 bg-gradient-to-r from-blue-50 to-white border-b border-blue-100 flex flex-wrap items-center justify-between gap-4">
-                <h2 class="text-lg font-bold text-slate-700 flex items-center gap-2">
-                    <span class="text-blue-500">📋</span> ประวัติย้อนหลัง
-                </h2>
-                <div class="flex flex-wrap gap-2 items-center">
-                    <input type="month" id="monthFilter" onchange="applyFilter('month')" class="border border-blue-200 bg-white text-slate-600 rounded-lg px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-blue-400 transition">
-                    <input type="date" id="dateFilter" onchange="applyFilter('date')" class="border border-blue-200 bg-white text-slate-600 rounded-lg px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-blue-400 transition">
-                    <button onclick="resetFilter()" class="text-[10px] text-red-500 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition font-medium ml-2">ล้างค่า</button>
+            
+            <div class="p-4 bg-gradient-to-r from-blue-50 to-white border-b border-blue-100">
+                <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+                    <h2 class="text-lg font-bold text-slate-700 flex items-center gap-2">
+                        <span class="text-blue-500">📋</span> ประวัติย้อนหลัง & สรุปผล
+                    </h2>
+                    
+                    <div class="flex flex-wrap gap-2 items-center">
+                        <div class="flex flex-col">
+                            <label class="text-[10px] text-blue-400 ml-1 font-semibold">เลือกพนักงาน</label>
+                            <div class="relative">
+                                <select id="employeeFilter" onchange="applyFilter('employee')" class="border border-blue-200 bg-white text-slate-600 rounded-lg pl-2 pr-6 py-1 text-xs outline-none focus:ring-2 focus:ring-blue-400 transition w-32 appearance-none">
+                                    <option value="">ทั้งหมด</option>
+                                    </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">▼</div>
+                            </div>
+                        </div>
+                        <div class="flex flex-col">
+                            <label class="text-[10px] text-blue-400 ml-1 font-semibold">เดือน</label>
+                            <input type="month" id="monthFilter" onchange="applyFilter('month')" class="border border-blue-200 bg-white text-slate-600 rounded-lg px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-blue-400 transition">
+                        </div>
+                        <div class="flex flex-col">
+                            <label class="text-[10px] text-blue-400 ml-1 font-semibold">วันที่</label>
+                            <input type="date" id="dateFilter" onchange="applyFilter('date')" class="border border-blue-200 bg-white text-slate-600 rounded-lg px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-blue-400 transition">
+                        </div>
+                        <div class="pt-4">
+                             <button onclick="resetFilter()" class="text-[10px] text-red-500 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition font-medium">ล้างค่า</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-2">
+                    <div class="bg-blue-500 text-white p-3 rounded-xl shadow-sm flex flex-col items-center">
+                        <span class="text-[10px] opacity-80">ส่งรายงานรวม</span>
+                        <span id="statTotal" class="text-2xl font-bold">0</span>
+                    </div>
+                    <div class="bg-green-500 text-white p-3 rounded-xl shadow-sm flex flex-col items-center">
+                        <span class="text-[10px] opacity-80">รอบเช้า</span>
+                        <span id="statMorning" class="text-2xl font-bold">0</span>
+                    </div>
+                    <div class="bg-orange-400 text-white p-3 rounded-xl shadow-sm flex flex-col items-center">
+                        <span class="text-[10px] opacity-80">รอบบ่าย</span>
+                        <span id="statAfternoon" class="text-2xl font-bold">0</span>
+                    </div>
+                    <div class="bg-red-500 text-white p-3 rounded-xl shadow-sm flex flex-col items-center relative overflow-hidden">
+                        <span class="text-[10px] opacity-80">ขาดส่ง (บันทึกแล้ว)</span>
+                        <span id="statMissing" class="text-2xl font-bold">0</span>
+                        <div class="absolute -right-2 -bottom-2 text-white opacity-20 text-4xl">!</div>
+                    </div>
                 </div>
             </div>
 
@@ -166,6 +207,8 @@
                 if(reports.status === 'error') throw new Error(reports.message);
                 allEmployees = employees;
                 allReports = reports;
+                // เติมรายชื่อใส่ Dropdown
+                populateEmployeeFilter();
                 renderTrackingBoard();
                 renderTable(allReports);
             }).catch(err => {
@@ -173,7 +216,21 @@
                 Swal.fire('Error', 'โหลดข้อมูลไม่สำเร็จ', 'error');
             });
         }
-
+        // --- 1. Populate Dropdown ---
+        function populateEmployeeFilter() {
+            const select = document.getElementById('employeeFilter');
+            // เก็บค่าเดิมไว้ก่อน (กรณี reload แล้วอยากให้คงค่าเดิม)
+            const currentVal = select.value;
+            
+            select.innerHTML = '<option value="">ทั้งหมด</option>';
+            allEmployees.forEach(name => {
+                const opt = document.createElement('option');
+                opt.value = name;
+                opt.innerText = name;
+                select.appendChild(opt);
+            });
+            select.value = currentVal;
+        }
         function renderTrackingBoard() {
             const morningGrid = document.getElementById('morningGrid');
             const afternoonGrid = document.getElementById('afternoonGrid');
@@ -249,7 +306,7 @@
             if (morningGrid.children.length === 0) morningGrid.innerHTML = `<div class="col-span-full py-6 text-center text-slate-400 bg-white rounded-xl text-xs border border-slate-100">ยังไม่มีข้อมูลรอบเช้า</div>`;
             if (afternoonGrid.children.length === 0) afternoonGrid.innerHTML = `<div class="col-span-full py-6 text-center text-slate-400 bg-white rounded-xl text-xs border border-slate-100">ยังไม่มีข้อมูลรอบบ่าย</div>`;
         }
-
+        
         // Card
         function createReportCard(item) {
             const imgUrl = fixDriveUrl(item.image);
@@ -351,14 +408,23 @@
         }
 
         // --- Table Logic ---
-        function applyFilter(type) {
-            if(type === 'date') document.getElementById('monthFilter').value = '';
-            if(type === 'month') document.getElementById('dateFilter').value = '';
+        function applyFilter(triggerSource) {
+            // Reset other date filters if logic demands (Optional)
+            if(triggerSource === 'date') document.getElementById('monthFilter').value = '';
+            if(triggerSource === 'month') document.getElementById('dateFilter').value = '';
+
             const dateVal = document.getElementById('dateFilter').value;   
             const monthVal = document.getElementById('monthFilter').value; 
+            const empVal = document.getElementById('employeeFilter').value; // ค่าจาก Dropdown
+
             let filteredData = allReports.filter(item => {
                 const d = parseThaiDate(item.timestamp);
                 if (!d) return false; 
+                
+                // กรองตามคน
+                if (empVal && item.name !== empVal) return false;
+
+                // กรองตามเวลา
                 if (dateVal) return getISODate(d) === dateVal;
                 if (monthVal) {
                     const itemMonth = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
@@ -366,13 +432,60 @@
                 }
                 return true; 
             });
+
             renderTable(filteredData);
+            updateStats(filteredData); // อัปเดตการ์ดสรุป
+        }
+
+        // --- 4. Update Stats Cards ---
+        function updateStats(data) {
+            let total = 0;
+            let morning = 0;
+            let afternoon = 0;
+            let missing = 0;
+
+            data.forEach(item => {
+                if (item.detail === 'ขาดส่ง') {
+                    missing++;
+                } else {
+                    total++; // นับเฉพาะที่ส่งจริง
+                    if (item.type === 'เช้า') morning++;
+                    if (item.type === 'บ่าย') afternoon++;
+                }
+            });
+
+            // ใส่ comma คั่นหลักพัน
+            const fmt = (n) => n.toLocaleString();
+            
+            // Animation นับเลขเบาๆ
+            animateValue("statTotal", parseInt(document.getElementById("statTotal").innerText.replace(/,/g, '')), total, 500);
+            animateValue("statMorning", parseInt(document.getElementById("statMorning").innerText.replace(/,/g, '')), morning, 500);
+            animateValue("statAfternoon", parseInt(document.getElementById("statAfternoon").innerText.replace(/,/g, '')), afternoon, 500);
+            animateValue("statMissing", parseInt(document.getElementById("statMissing").innerText.replace(/,/g, '')), missing, 500);
+        }
+
+        function animateValue(id, start, end, duration) {
+            if (start === end) return;
+            const range = end - start;
+            let current = start;
+            const increment = end > start ? 1 : -1;
+            const stepTime = Math.abs(Math.floor(duration / range));
+            const obj = document.getElementById(id);
+            const timer = setInterval(function() {
+                current += increment;
+                obj.innerHTML = current.toLocaleString();
+                if (current == end) clearInterval(timer);
+            }, stepTime);
         }
 
         function renderTable(data) {
             const tbody = document.getElementById('reportTableBody');
             tbody.innerHTML = '';
             document.getElementById('tableCount').innerText = `พบข้อมูล ${data.length} รายการ`;
+            
+            // เรียก Update Stats ทันทีที่ render table
+            updateStats(data);
+
             if (data.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-400">ไม่พบข้อมูลตามเงื่อนไข</td></tr>`;
                 return;
@@ -389,7 +502,6 @@
                 if(item.type === 'บ่าย') typeColor = 'text-orange-600 font-medium';
                 if(item.type === 'เรื่องร้องเรียน') typeColor = 'text-red-600 font-bold';
                 
-                // *** เช็คขาดส่ง และเปลี่ยนสีพื้นหลังเป็นแดงอ่อน ***
                 if(item.detail === 'ขาดส่ง') {
                     row.className = 'bg-red-50 border-b border-red-100 hover:bg-red-100 transition';
                     typeColor = 'text-red-600 font-bold';
@@ -413,9 +525,11 @@
                 tbody.appendChild(row);
             });
         }
+
         function resetFilter() {
             document.getElementById('dateFilter').value = '';
             document.getElementById('monthFilter').value = '';
+            document.getElementById('employeeFilter').value = ''; // Reset dropdown
             renderTable(allReports);
         }
 
@@ -468,4 +582,3 @@
 </body>
 
 </html>
-
