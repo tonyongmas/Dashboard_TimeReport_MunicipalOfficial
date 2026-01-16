@@ -208,7 +208,7 @@
                 if (submittedTypes.has('เช้า')) {
                     const report = todayReports.find(r => r.name === name && r.type === 'เช้า');
                     morningCardsData.push({ status: 1, name: name, data: report });
-                } else if (currentHour >= 12) {
+                } else if (currentHour >= 11) {
                     morningCardsData.push({ status: 2, name: name, data: null });
                 }
 
@@ -216,7 +216,7 @@
                 if (submittedTypes.has('บ่าย')) {
                     const report = todayReports.find(r => r.name === name && r.type === 'บ่าย');
                     afternoonCardsData.push({ status: 1, name: name, data: report });
-                } else if (currentHour >= 16) {
+                } else if (currentHour >= 15) {
                     afternoonCardsData.push({ status: 2, name: name, data: null });
                 }
             });
@@ -468,3 +468,4 @@
 </body>
 
 </html>
+
